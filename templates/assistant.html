@@ -1,0 +1,268 @@
+{% extends "base.html" %}
+{% from "_scheme_card.html" import card %}
+{% block content %}
+<div class="tabs">
+  <div class="tab active">{{ t('tabFind') }}</div>
+  <a class="tab" href="{{ url_for('browse') }}" style="text-decoration:none;">{{ t('tabBrowse') }}</a>
+  <a class="tab" href="{{ url_for('saved') }}" style="text-decoration:none;">{{ t('tabSaved') }}</a>
+  <a class="tab" href="{{ url_for('documents') }}" style="text-decoration:none;">{{ t('tabDocuments') }}</a>
+</div>
+
+<div class="card">
+  <button class="wake-toggle" id="wakeToggleBtn" type="button"><span class="dot"></span> {{ t('wakeToggleOff') }}</button>
+  <p class="commands-hint">{{ t('wakeCaption') }}</p>
+
+  <div class="ocr-box">
+    <h4 style="margin-top:0;">📷 {{ t('ocrTitle') }}</h4>
+    <p style="font-size:12.5px; color:var(--ink-soft); margin-bottom:14px;">{{ t('ocrIntro') }}</p>
+    <div class="ocr-grid">
+      <label class="ocr-upload" data-doc-type="aadhaar">
+        <span>{{ t('ocrAadhaar') }}</span>
+        <input type="file" accept="image/*" data-ocr-input="aadhaar">
+        <span class="ocr-status" data-ocr-status="aadhaar"></span>
+      </label>
+      <label class="ocr-upload" data-doc-type="pan">
+        <span>{{ t('ocrPan') }}</span>
+        <input type="file" accept="image/*" data-ocr-input="pan">
+        <span class="ocr-status" data-ocr-status="pan"></span>
+      </label>
+      <label class="ocr-upload" data-doc-type="income">
+        <span>{{ t('ocrIncome') }}</span>
+        <input type="file" accept="image/*" data-ocr-input="income">
+        <span class="ocr-status" data-ocr-status="income"></span>
+      </label>
+      <label class="ocr-upload" data-doc-type="marksheet">
+        <span>{{ t('ocrMarksheet') }}</span>
+        <input type="file" accept="image/*" data-ocr-input="marksheet">
+        <span class="ocr-status" data-ocr-status="marksheet"></span>
+      </label>
+    </div>
+  </div>
+
+  <form method="POST" action="{{ url_for('submit_assistant') }}" id="profileForm">
+    {% for f in fields %}
+    <div class="field voice-field" data-field="{{ f.name }}" data-type="{{ f.type }}">
+      <label>{{ t(f.label_key) }}
+        <button type="button" class="mic-mini" data-mic-for="{{ f.name }}" title="Speak this answer">🎤</button>
+      </label>
+
+      {% if f.type == 'select' %}
+        <select name="{{ f.name }}" {{ 'required' if not f.get('optional') }}>
+          <option value="">—</option>
+          {% if f.options == 'STATES' %}
+            {% for s in states %}
+              <option value="{{ s }}" {{ 'selected' if profile and profile.state==s }}>{{ s }}</option>
+            {% endfor %}
+          {% else %}
+            {% for value, key in f.options %}
+              <option value="{{ value }}" {{ 'selected' if profile and profile[f.name]==value }}>{{ t(key) }}</option>
+            {% endfor %}
+          {% endif %}
+        </select>
+      {% elif f.type == 'number' %}
+        <input type="number" name="{{ f.name }}" value="{{ profile[f.name] if profile else '' }}" {{ 'required' if not f.get('optional') }}>
+      {% else %}
+        <input type="text" name="{{ f.name }}" value="{{ profile[f.name] if profile else '' }}">
+      {% endif %}
+    </div>
+    {% endfor %}
+    <div class="form-actions">
+      <button class="btn-primary" type="button" id="voiceWalkthroughBtn">🎙️ {{ t('voiceFillBtn') }}</button>
+      <button class="btn-ghost" type="submit">{{ t('send') }}</button>
+    </div>
+  </form>
+</div>
+
+<!-- ═══ VOICE ASSISTANT MODAL ═══════════════════════════════════════════ -->
+<div id="voiceModal" class="vmodal-backdrop" style="display:none;" aria-modal="true" role="dialog">
+  <div class="vmodal-box">
+
+    <!-- Header -->
+    <div class="vmodal-header">
+      <div class="vmodal-brand">🎙️ Sahayak Voice Assistant</div>
+      <button class="vmodal-close" id="voiceModalClose" title="Stop">✕</button>
+    </div>
+
+    <!-- Progress bar -->
+    <div class="vmodal-progress-track">
+      <div class="vmodal-progress-bar" id="vmProgressBar"></div>
+    </div>
+    <div class="vmodal-step-label" id="vmStepLabel"></div>
+
+    <!-- Question box -->
+    <div class="vmodal-question-box" id="vmQuestion">
+      <span id="vmQuestionText"></span>
+    </div>
+
+    <!-- Mic / state area -->
+    <div class="vmodal-mic-area">
+      <div class="vmodal-mic-ring" id="vmMicRing">
+        <div class="vmodal-mic-dot" id="vmMicDot">🎤</div>
+      </div>
+      <div class="vmodal-state-label" id="vmStateLabel"></div>
+    </div>
+
+    <!-- What I heard -->
+    <div class="vmodal-heard-box" id="vmHeardBox" style="display:none;">
+      <span class="vmodal-heard-lbl" id="vmHeardLbl"></span>
+      <span class="vmodal-heard-val" id="vmHeardVal"></span>
+    </div>
+
+    <!-- Filled answer -->
+    <div class="vmodal-answer-box" id="vmAnswerBox" style="display:none;">
+      <span class="vmodal-answer-icon">✅</span>
+      <span class="vmodal-answer-val" id="vmAnswerVal"></span>
+    </div>
+
+    <!-- Control hint -->
+    <div class="vmodal-hint" id="vmHint"></div>
+
+    <!-- Skip button -->
+    <div style="text-align:center; margin-top:10px;">
+      <button class="vmodal-skip-btn" id="vmSkipBtn"></button>
+    </div>
+  </div>
+</div>
+
+{% if matches %}
+<div id="results">
+  <div class="results-head"><h2>{{ d('resultsFound', n=matches|length, s='' if matches|length==1 else 's') }}</h2></div>
+  {% for sc in matches %}{{ card(sc, scheme_text, saved_ids, applied_ids) }}{% endfor %}
+
+  <div class="feedback-box" id="feedbackBox">
+    <div class="frow">
+      <span style="font-size:13.5px; font-weight:700;">{{ t('feedbackPrompt') }}</span>
+      <button class="fbtn" id="fbUp" type="button">👍</button>
+      <button class="fbtn" id="fbDown" type="button">👎</button>
+    </div>
+    <textarea id="fbComment" placeholder="{{ t('feedbackCommentPlaceholder') }}"></textarea>
+    <div class="form-actions"><button class="btn-primary" id="fbSubmit" type="button">{{ t('submitFeedback') }}</button></div>
+  </div>
+</div>
+{% elif profile %}
+<p class="no-match">{{ t('noneFound') }}</p>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+  window.SAHAYAK_LANG        = {{ session.get('lang','en') | tojson }};
+  window.SAHAYAK_SPEECH_LANG = {{ (langs | selectattr('code','equalto', session.get('lang','en')) | list | first).speech | tojson }};
+  window.SAHAYAK_FRESH_LOGIN = {{ 'true' if fresh_login else 'false' }};
+  window.SAHAYAK_WELCOME     = {{ d('welcomeBack', n=session['name']) | tojson }};
+  window.SAHAYAK_NO_PROFILE  = {{ 'true' if not profile else 'false' }};
+  window.SAHAYAK_VOICE_HINT  = {{ t('voiceHint') | tojson }};
+
+  /* ── All translated UI strings for the active language ── */
+  window.SAHAYAK_T = {
+    greet:          {{ t('greet')        | tojson }},
+    thinking:       {{ t('thinking')     | tojson }},
+    noted:          {{ t('noted')        | tojson }},
+    listening:      {{ t('listening')    | tojson }},
+    skip:           {{ t('skip')         | tojson }},
+    back:           {{ t('back')         | tojson }},
+    repeat:         {{ t('repeat')       | tojson }},
+    wentBack:       {{ t('wentBack')     | tojson }},
+    startOver:      {{ t('startOver')    | tojson }},
+    tapMic:         {{ t('tapMic')       | tojson }},
+    commandsHint:   {{ t('commandsHint') | tojson }},
+    wakeGreeting:   {{ t('wakeGreeting') | tojson }},
+    /* field questions */
+    qAge:           {{ t('qAge')         | tojson }},
+    qGender:        {{ t('qGender')      | tojson }},
+    qOccupation:    {{ t('qOccupation')  | tojson }},
+    qEducation:     {{ t('qEducation')   | tojson }},
+    qIncome:        {{ t('qIncome')      | tojson }},
+    qState:         {{ t('qState')       | tojson }},
+    qOtherInfo:     {{ t('qOtherInfo')   | tojson }},
+    qCategory:      {{ t('qCategory')    | tojson }},
+    /* option labels (for voice matching) */
+    male:           {{ t('male')         | tojson }},
+    female:         {{ t('female')       | tojson }},
+    other:          {{ t('other')        | tojson }},
+    occFarmer:      {{ t('occFarmer')    | tojson }},
+    occStudent:     {{ t('occStudent')   | tojson }},
+    occEntrepreneur:{{ t('occEntrepreneur') | tojson }},
+    occUnorganized: {{ t('occUnorganized')  | tojson }},
+    occSalaried:    {{ t('occSalaried')  | tojson }},
+    occHomemaker:   {{ t('occHomemaker') | tojson }},
+    occSenior:      {{ t('occSenior')    | tojson }},
+    occArtisan:     {{ t('occArtisan')   | tojson }},
+    occVendor:      {{ t('occVendor')    | tojson }},
+    occUnemployed:  {{ t('occUnemployed')| tojson }},
+    eduBelow10:     {{ t('eduBelow10')   | tojson }},
+    edu10:          {{ t('edu10')        | tojson }},
+    eduGrad:        {{ t('eduGrad')      | tojson }},
+    eduPG:          {{ t('eduPG')        | tojson }},
+    catGen:         {{ t('catGen')       | tojson }},
+    catOBC:         {{ t('catOBC')       | tojson }},
+    catSC:          {{ t('catSC')        | tojson }},
+    catST:          {{ t('catST')        | tojson }},
+    catOther:       {{ t('catOther')     | tojson }},
+  };
+
+  /* ── Field order for voice walkthrough ── */
+  window.SAHAYAK_FIELDS = [
+    { name: "age",        type: "number", qKey: "qAge" },
+    { name: "gender",     type: "select", qKey: "qGender" },
+    { name: "occupation", type: "select", qKey: "qOccupation" },
+    { name: "education",  type: "select", qKey: "qEducation" },
+    { name: "income",     type: "number", qKey: "qIncome" },
+    { name: "state",      type: "select", qKey: "qState" },
+    { name: "other_info", type: "text",   qKey: "qOtherInfo", optional: true },
+    { name: "category",   type: "select", qKey: "qCategory" },
+  ];
+
+  /* ── Per-language modal UI labels ── */
+  window.SAHAYAK_VM = {
+    en: {
+      stepOf:     (i,n) => `Question ${i} of ${n}`,
+      listening:  '🎤 Listening… speak now',
+      heard:      'I heard:',
+      filled:     'Filled:',
+      retry:      "Sorry, didn't catch that — please say it again.",
+      skip:       'Skip this question',
+      hint:       'Say "skip", "go back" or "repeat" any time.',
+      done:       '✅ All done! Finding schemes…',
+      stopped:    'Voice session stopped.',
+      notSupported:'Speech recognition is not supported in this browser. Please use Chrome or Edge.',
+    },
+    hi: {
+      stepOf:     (i,n) => `प्रश्न ${i} / ${n}`,
+      listening:  '🎤 सुन रहा हूँ… बोलिए',
+      heard:      'सुना:',
+      filled:     'भरा:',
+      retry:      'माफ़ कीजिए, समझ नहीं आया। कृपया फिर से बोलें।',
+      skip:       'यह प्रश्न छोड़ें',
+      hint:       '"छोड़ें", "पीछे जाएँ" या "दोहराएँ" कभी भी बोलें।',
+      done:       '✅ हो गया! योजनाएँ खोज रहे हैं…',
+      stopped:    'वॉइस सत्र रोका गया।',
+      notSupported:'यह ब्राउज़र स्पीच पहचान का समर्थन नहीं करता। कृपया Chrome या Edge उपयोग करें।',
+    },
+    mr: {
+      stepOf:     (i,n) => `प्रश्न ${i} / ${n}`,
+      listening:  '🎤 ऐकत आहे… बोला',
+      heard:      'ऐकले:',
+      filled:     'भरले:',
+      retry:      'माफ करा, समजले नाही. कृपया पुन्हा सांगा.',
+      skip:       'हा प्रश्न वगळा',
+      hint:       '"वगळा", "मागे जा" किंवा "पुन्हा सांगा" केव्हाही म्हणा.',
+      done:       '✅ झाले! योजना शोधत आहोत…',
+      stopped:    'वॉइस सत्र थांबवले.',
+      notSupported:'हा ब्राउझर स्पीच ओळख समर्थन करत नाही. कृपया Chrome किंवा Edge वापरा.',
+    },
+    ta: {
+      stepOf:     (i,n) => `கேள்வி ${i} / ${n}`,
+      listening:  '🎤 கேட்கிறேன்… பேசுங்கள்',
+      heard:      'கேட்டது:',
+      filled:     'நிரப்பப்பட்டது:',
+      retry:      'மன்னிக்கவும், புரியவில்லை. மீண்டும் சொல்லுங்கள்.',
+      skip:       'இந்த கேள்வியை தவிர்',
+      hint:       '"தவிர்", "பின் செல்" அல்லது "மீண்டும்" சொல்லுங்கள்.',
+      done:       '✅ முடிந்தது! திட்டங்களைத் தேடுகிறேன்…',
+      stopped:    'குரல் அமர்வு நிறுத்தப்பட்டது.',
+      notSupported:'இந்த உலாவி பேச்சு அங்கீகாரத்தை ஆதரிக்கவில்லை. Chrome அல்லது Edge பயன்படுத்தவும்.',
+    },
+  };
+</script>
+{% endblock %}

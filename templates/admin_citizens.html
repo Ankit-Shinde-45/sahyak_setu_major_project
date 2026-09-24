@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="tabs">
+  <a class="tab" href="{{ url_for('admin_schemes') }}" style="text-decoration:none;">{{ t('tabSchemes') }}</a>
+  <div class="tab active">{{ t('tabUsers') }}</div>
+  <a class="tab" href="{{ url_for('admin_analytics') }}" style="text-decoration:none;">{{ t('tabAnalytics') }}</a>
+</div>
+<div class="card">
+  {% if rows %}
+  <table>
+    <thead><tr><th>{{ t('fullName') }}</th><th>{{ t('username') }}</th><th>State</th><th>{{ t('lastResult') }}</th></tr></thead>
+    <tbody>
+      {% for r in rows %}
+      <tr>
+        <td>{{ r.user.name }}</td>
+        <td>{{ r.user.username }}</td>
+        <td>{{ r.profile.state if r.profile else '—' }}</td>
+        <td>{{ d('matchedCount', n=r.match_count, s='' if r.match_count==1 else 's') if r.profile else t('notRunYet') }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p>{{ t('noUsers') }}</p>
+  {% endif %}
+</div>
+{% endblock %}

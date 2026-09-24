@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="tabs">
+  <div class="tab active">{{ t('tabSchemes') }}</div>
+  <a class="tab" href="{{ url_for('admin_citizens') }}" style="text-decoration:none;">{{ t('tabUsers') }}</a>
+  <a class="tab" href="{{ url_for('admin_analytics') }}" style="text-decoration:none;">{{ t('tabAnalytics') }}</a>
+</div>
+
+<div class="card">
+  <h2 style="margin-top:0;">{{ t('adminTitle') }}</h2>
+
+  <details>
+    <summary class="btn-primary" style="display:inline-block; cursor:pointer;">{{ t('addSchemeTitle') }}</summary>
+    <form method="POST" action="{{ url_for('admin_add_scheme') }}" style="margin-top:16px;">
+      <div class="row-2">
+        <div class="field"><label>{{ t('schemeName') }}</label><input name="name" required></div>
+        <div class="field"><label>{{ t('schemeTag') }}</label><input name="tag"></div>
+      </div>
+      <div class="row-2">
+        <div class="field"><label>{{ t('schemeScope') }}</label>
+          <select name="scope"><option value="central">{{ t('central') }}</option><option value="state">{{ d('stateGovt', s='') }}</option></select>
+        </div>
+        <div class="field"><label>{{ t('schemeStateField') }}</label>
+          <select name="state">{% for s in states %}{% if s != 'Other' %}<option value="{{ s }}">{{ s }}</option>{% endif %}{% endfor %}</select>
+        </div>
+      </div>
+      <div class="field"><label>{{ t('schemeDesc') }}</label><textarea name="description"></textarea></div>
+      <div class="row-2">
+        <div class="field"><label>{{ t('schemeBenefits') }}</label><textarea name="benefits"></textarea></div>
+        <div class="field"><label>{{ t('schemeDocuments') }}</label><textarea name="documents"></textarea></div>
+      </div>
+      <div class="row-2">
+        <div class="field"><label>{{ t('schemeSteps') }}</label><textarea name="steps"></textarea></div>
+        <div class="field"><label>{{ t('schemeLink') }}</label><input name="link" placeholder="https://"></div>
+      </div>
+      <h4>{{ t('ruleTitle') }}</h4>
+      <div class="row-2">
+        <div class="field"><label>{{ t('minAge') }}</label><input name="min_age" type="number"></div>
+        <div class="field"><label>{{ t('maxAge') }}</label><input name="max_age" type="number"></div>
+      </div>
+      <div class="row-2">
+        <div class="field"><label>Gender</label>
+          <select name="gender"><option value="any">{{ t('anyOption') }}</option><option value="male">{{ t('male') }}</option><option value="female">{{ t('female') }}</option></select>
+        </div>
+        <div class="field"><label>{{ t('maxIncome') }}</label><input name="max_income" type="number"></div>
+      </div>
+      <div class="row-2">
+        <div class="field"><label>Occupation</label>
+          <select name="occupation">
+            <option value="any">{{ t('anyOption') }}</option>
+            <option value="farmer">{{ t('occFarmer') }}</option><option value="student">{{ t('occStudent') }}</option>
+            <option value="entrepreneur">{{ t('occEntrepreneur') }}</option><option value="unorganized">{{ t('occUnorganized') }}</option>
+            <option value="salaried">{{ t('occSalaried') }}</option><option value="homemaker">{{ t('occHomemaker') }}</option>
+            <option value="senior">{{ t('occSenior') }}</option><option value="artisan">{{ t('occArtisan') }}</option>
+            <option value="vendor">{{ t('occVendor') }}</option><option value="unemployed">{{ t('occUnemployed') }}</option>
+          </select>
+        </div>
+        <div class="field"><label>Category</label>
+          <select name="category"><option value="any">{{ t('anyOption') }}</option><option value="general">{{ t('catGen') }}</option><option value="obc">{{ t('catOBC') }}</option><option value="sc">{{ t('catSC') }}</option><option value="st">{{ t('catST') }}</option></select>
+        </div>
+      </div>
+      <div class="form-actions"><button class="btn-primary" type="submit">{{ t('saveScheme') }}</button></div>
+    </form>
+  </details>
+
+  <h4 style="margin-top:24px;">{{ t('seeded') }} ({{ schemes|length }})</h4>
+  {% for sc in schemes %}
+    <div class="scheme-admin-row">
+      <div><b>{{ sc.t.en.name }}</b><div class="meta">{{ t('central') if sc.scope=='central' else d('stateGovt', s=sc.state) }} · {{ sc.t.en.tag }}</div></div>
+      <span class="pill">{{ t('seeded') }}</span>
+    </div>
+  {% endfor %}
+
+  {% if custom %}
+  <h4 style="margin-top:20px;">{{ t('custom') }} ({{ custom|length }})</h4>
+  {% for sc in custom %}
+    <div class="scheme-admin-row">
+      <div><b>{{ sc.t.en.name }}</b><div class="meta">{{ t('central') if sc.scope=='central' else d('stateGovt', s=sc.state) }} · {{ sc.t.en.tag }}</div></div>
+      <form method="POST" action="{{ url_for('admin_delete_scheme', scheme_id=sc.id) }}">
+        <button class="btn-danger" type="submit">{{ t('deleteScheme') }}</button>
+      </form>
+    </div>
+  {% endfor %}
+  {% endif %}
+</div>
+{% endblock %}

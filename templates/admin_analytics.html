@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="tabs">
+  <a class="tab" href="{{ url_for('admin_schemes') }}" style="text-decoration:none;">{{ t('tabSchemes') }}</a>
+  <a class="tab" href="{{ url_for('admin_citizens') }}" style="text-decoration:none;">{{ t('tabUsers') }}</a>
+  <div class="tab active">{{ t('tabAnalytics') }}</div>
+</div>
+<div class="card">
+  <div class="analytics-grid">
+    <div class="analytics-card"><b>{{ total_citizens }}</b><span>{{ t('totalCitizens') }}</span></div>
+    <div class="analytics-card"><b>{{ total_apps }}</b><span>{{ t('totalApplications') }}</span></div>
+    <div class="analytics-card"><b>{{ total_feedback }}</b><span>{{ t('feedbackSummary') }}</span></div>
+    <div class="analytics-card"><b>{{ positive_pct }}%</b><span>{{ t('positivePct') }}</span></div>
+  </div>
+
+  <h4>{{ t('topSchemes') }}</h4>
+  {% for name, count in top_rows %}
+  <div class="bar-row">
+    <span class="label">{{ name }}</span>
+    <div class="bar-track"><div class="bar-fill" style="width:{{ (count/max_count*100)|round }}%"></div></div>
+    <span class="bar-count">{{ count }}</span>
+  </div>
+  {% else %}
+  <p style="color:var(--ink-soft); font-size:13px;">—</p>
+  {% endfor %}
+
+  <h4 style="margin-top:20px;">{{ t('schemesByScope') }}</h4>
+  <div class="bar-row">
+    <span class="label">{{ t('central') }}</span>
+    <div class="bar-track"><div class="bar-fill" style="width:{{ (central_count/scope_max*100)|round }}%"></div></div>
+    <span class="bar-count">{{ central_count }}</span>
+  </div>
+  <div class="bar-row">
+    <span class="label">State</span>
+    <div class="bar-track"><div class="bar-fill" style="width:{{ (state_count/scope_max*100)|round }}%"></div></div>
+    <span class="bar-count">{{ state_count }}</span>
+  </div>
+</div>
+{% endblock %}

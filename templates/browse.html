@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% from "_scheme_card.html" import card %}
+{% block content %}
+<div class="tabs">
+  <a class="tab" href="{{ url_for('assistant') }}" style="text-decoration:none;">{{ t('tabFind') }}</a>
+  <div class="tab active">{{ t('tabBrowse') }}</div>
+  <a class="tab" href="{{ url_for('saved') }}" style="text-decoration:none;">{{ t('tabSaved') }}</a>
+  <a class="tab" href="{{ url_for('documents') }}" style="text-decoration:none;">{{ t('tabDocuments') }}</a>
+</div>
+
+<div class="card">
+  <form method="GET" class="browse-bar">
+    <input type="text" name="q" value="{{ q }}" placeholder="{{ t('searchPlaceholder') }}">
+    <select name="scope" onchange="this.form.submit()">
+      <option value="all" {{ 'selected' if scope=='all' }}>{{ t('filterAll') }}</option>
+      <option value="central" {{ 'selected' if scope=='central' }}>{{ t('filterCentral') }}</option>
+      <option value="state" {{ 'selected' if scope=='state' }}>{{ t('filterStateOnly') }}</option>
+    </select>
+    <select name="state" onchange="this.form.submit()">
+      <option value="all">{{ t('filterByState') }}</option>
+      {% for s in states %}
+        {% if s != 'Other' %}<option value="{{ s }}" {{ 'selected' if state==s }}>{{ s }}</option>{% endif %}
+      {% endfor %}
+    </select>
+    <button class="btn-primary" type="submit">{{ t('send') }}</button>
+  </form>
+</div>
+
+<div id="results">
+  {% if results %}
+    {% for sc in results %}{{ card(sc, scheme_text, saved_ids, applied_ids) }}{% endfor %}
+  {% else %}
+    <p class="no-match">{{ t('noResultsBrowse') }}</p>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% from "_scheme_card.html" import card %}
+{% block content %}
+<div class="tabs">
+  <a class="tab" href="{{ url_for('assistant') }}" style="text-decoration:none;">{{ t('tabFind') }}</a>
+  <a class="tab" href="{{ url_for('browse') }}" style="text-decoration:none;">{{ t('tabBrowse') }}</a>
+  <div class="tab active">{{ t('tabSaved') }}{% if results %} ({{ results|length }}){% endif %}</div>
+  <a class="tab" href="{{ url_for('documents') }}" style="text-decoration:none;">{{ t('tabDocuments') }}</a>
+</div>
+
+<div id="results">
+  {% if results %}
+    {% for sc in results %}{{ card(sc, scheme_text, saved_ids, applied_ids) }}{% endfor %}
+  {% else %}
+    <p class="no-match">{{ t('noSaved') }}</p>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card">
+  <div class="role-tabs">
+    <a class="role-tab {{ 'active' if role!='admin' }}" href="{{ url_for('login') }}">{{ t('loginCitizen') }}</a>
+    <a class="role-tab {{ 'active' if role=='admin' }}" href="{{ url_for('login', role='admin') }}">{{ t('loginAdmin') }}</a>
+  </div>
+
+  {% if error %}<div class="form-msg">{{ error }}</div>{% endif %}
+
+  {% if signup %}
+  <form method="POST" action="{{ url_for('do_signup') }}">
+    <div class="field"><label>{{ t('fullName') }}</label><input name="name" type="text" required></div>
+    <div class="field"><label>{{ t('username') }}</label><input name="username" type="text" required></div>
+    <div class="field"><label>{{ t('password') }}</label><input name="password" type="password" required></div>
+    <div class="field"><label>{{ t('confirmPassword') }}</label><input name="password2" type="password" required></div>
+    <div class="form-actions">
+      <button class="btn-primary" type="submit">{{ t('signUp') }}</button>
+      <a class="link-toggle" href="{{ url_for('login') }}">{{ t('haveAccount') }}</a>
+    </div>
+  </form>
+  {% else %}
+  <form method="POST" action="{{ url_for('do_login') }}">
+    <input type="hidden" name="role" value="{{ role }}">
+    <div class="field"><label>{{ t('username') }}</label><input name="username" type="text" required></div>
+    <div class="field"><label>{{ t('password') }}</label><input name="password" type="password" required></div>
+    <div class="form-actions">
+      <button class="btn-primary" type="submit">{{ t('logIn') }}</button>
+      {% if role != 'admin' %}<a class="link-toggle" href="{{ url_for('login', signup=1) }}">{{ t('needAccount') }}</a>{% endif %}
+    </div>
+  </form>
+  {% if role == 'admin' %}<div class="demo-note">{{ t('demoAdminNote') }}</div>{% endif %}
+  {% endif %}
+</div>
+{% endblock %}

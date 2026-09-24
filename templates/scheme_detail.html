@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% from "_scheme_card.html" import card %}
+{% block content %}
+{% set txt = scheme_text(sc) %}
+<a class="link-toggle" href="javascript:history.back()">← {{ t('back') }}</a>
+
+<div class="card" style="margin-top:14px;">
+  {{ card(sc, scheme_text, saved_ids, applied_ids) }}
+</div>
+
+<div class="card">
+  <h4 style="margin-top:0;">{{ t('officialLink') }}</h4>
+  <p style="font-size:13px; color:var(--ink-soft); margin-bottom:14px;">
+    This is the scheme's official government page, shown here so you don't have to leave this site.
+    Some government websites don't allow this kind of embedding for security reasons —
+    if the box below stays blank, use the button to open the page directly instead.
+  </p>
+  <a class="btn-primary" style="display:inline-block; text-decoration:none; margin-bottom:16px;"
+     href="{{ txt.link }}" target="_blank" rel="noopener">↗ Open official website in a new tab</a>
+  <iframe src="{{ txt.link }}" title="{{ txt.name }} — official website"
+          style="width:100%; height:600px; border:1px solid var(--line); border-radius:12px;"
+          loading="lazy" referrerpolicy="no-referrer"></iframe>
+</div>
+{% endblock %}

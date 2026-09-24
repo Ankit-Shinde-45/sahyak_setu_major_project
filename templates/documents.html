@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% from "_scheme_card.html" import card %}
+{% block content %}
+<div class="tabs">
+  <a class="tab" href="{{ url_for('assistant') }}" style="text-decoration:none;">{{ t('tabFind') }}</a>
+  <a class="tab" href="{{ url_for('browse') }}" style="text-decoration:none;">{{ t('tabBrowse') }}</a>
+  <a class="tab" href="{{ url_for('saved') }}" style="text-decoration:none;">{{ t('tabSaved') }}</a>
+  <div class="tab active">{{ t('tabDocuments') }}</div>
+</div>
+
+<div class="card">
+  <p style="color:var(--ink-soft); font-size:14.5px; margin-top:0;">{{ t('documentsIntro') }}</p>
+  <form method="POST" action="{{ url_for('documents') }}">
+    <div class="field">
+      <label style="margin-bottom:10px;">{{ t('selectDocuments') }}</label>
+      <div class="doc-grid">
+        {% for doc in doc_list %}
+        <label class="doc-check">
+          <input type="checkbox" name="docs" value="{{ doc }}" {{ 'checked' if doc in selected }}>
+          <span>{{ doc }}</span>
+        </label>
+        {% endfor %}
+      </div>
+    </div>
+    <div class="form-actions">
+      <button class="btn-primary" type="submit">{{ t('checkEligibility') }}</button>
+    </div>
+  </form>
+</div>
+
+{% if matches is not none %}
+<div id="results">
+  {% if matches %}
+    <div class="results-head"><h2>{{ t('docResultsFound') }}</h2></div>
+    {% for sc in matches %}{{ card(sc, scheme_text, saved_ids, applied_ids) }}{% endfor %}
+  {% else %}
+    <p class="no-match">{{ t('noDocMatches') }}</p>
+  {% endif %}
+</div>
+{% endif %}
+{% endblock %}

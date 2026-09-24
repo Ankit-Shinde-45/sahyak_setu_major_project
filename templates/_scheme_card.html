@@ -1,0 +1,34 @@
+{% macro card(sc, scheme_text, saved_ids, applied_ids) %}
+{% set txt = scheme_text(sc) %}
+<div class="scheme" data-scheme-id="{{ sc.id }}">
+  <div class="badge-row">
+    <span class="tag scope-{{ sc.scope }}">{{ t('central') if sc.scope=='central' else d('stateGovt', s=sc.state) }}</span>
+    <span class="tag">{{ txt.tag }}</span>
+  </div>
+  <a href="{{ url_for('scheme_detail', scheme_id=sc.id) }}" class="scheme-title-link">
+    <h3>{{ txt.name }}</h3>
+  </a>
+  <p>{{ txt.desc }}</p>
+  <div class="cols">
+    <div>
+      <h4>{{ t('benefits') }}</h4>
+      <ul>{% for b in txt.benefits %}<li>{{ b }}</li>{% endfor %}</ul>
+      <h4 style="margin-top:12px;">{{ t('documents') }}</h4>
+      <ul>{% for b in txt.documents %}<li>{{ b }}</li>{% endfor %}</ul>
+    </div>
+    <div>
+      <h4>{{ t('steps') }}</h4>
+      <ul>{% for b in txt.steps %}<li>{{ b }}</li>{% endfor %}</ul>
+    </div>
+  </div>
+  <a href="{{ url_for('scheme_detail', scheme_id=sc.id) }}" class="apply">↗ {{ t('officialLink') }}</a>
+  <div class="scheme-actions">
+    <button class="act-btn save {{ 'on' if sc.id in saved_ids else '' }}" data-act="save" data-id="{{ sc.id }}">
+      {{ t('unsave') if sc.id in saved_ids else '☆ ' + t('save') }}
+    </button>
+    <button class="act-btn {{ 'on' if sc.id in applied_ids else '' }}" data-act="apply" data-id="{{ sc.id }}">
+      {{ '✓ ' + t('applied') if sc.id in applied_ids else t('markApplied') }}
+    </button>
+  </div>
+</div>
+{% endmacro %}
